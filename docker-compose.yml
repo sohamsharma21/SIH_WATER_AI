@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - MQTT_BROKER_URL=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - ENV=production
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./backend/data:/app/app/data
+      - ./backend/app/models:/app/app/models
+    networks:
+      - sih-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_KEY}
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    networks:
+      - sih-network
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+    networks:
+      - sih-network
+
+volumes:
+  mosquitto_data:
+  mosquitto_logs:
+
+networks:
+  sih-network:
+    driver: bridge
