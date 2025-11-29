@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { ReportResponse } from '@/lib/types'
 import { api } from '@/lib/api'
 
 export default function ReportsPage() {
-  const [reports, setReports] = useState<any[]>([])
+  const [reports, setReports] = useState<ReportResponse[]>([])
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
 
@@ -19,7 +20,7 @@ export default function ReportsPage() {
         window.open(response.data.report_url, '_blank')
         loadReports()
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error generating report:', error)
       alert('Failed to generate report')
     } finally {

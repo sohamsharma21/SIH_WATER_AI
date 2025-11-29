@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { ModelInfo } from '@/lib/types'
 import { api } from '@/lib/api'
 
 export default function AdminPage() {
-  const [models, setModels] = useState<any[]>([])
+  const [models, setModels] = useState<ModelInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [training, setTraining] = useState(false)
 
@@ -16,13 +17,13 @@ export default function AdminPage() {
     try {
       const response = await api.getModels()
       // Combine manager models and database models
-      const managerModels = response.data.manager_models || []
-      const dbModels = response.data.database_models || []
+      const managerModels: ModelInfo[] = response.data.manager_models || []
+      const dbModels: ModelInfo[] = response.data.database_models || []
       
       // Merge models, prefer database models if available
-      const allModels = [...dbModels]
-      managerModels.forEach((mm: any) => {
-        if (!allModels.find((m: any) => m.dataset_name === mm.dataset_name)) {
+      const allModels: ModelInfo[] = [...dbModels]
+      managerModels.forEach((mm: ModelInfo) => {
+        if (!allModels.find((m: ModelInfo) => m.dataset_name === mm.dataset_name)) {
           allModels.push({
             dataset_name: mm.dataset_name,
             model_name: mm.dataset_name,
@@ -93,7 +94,7 @@ export default function AdminPage() {
                       Dataset: {model.dataset_name} • Version: {model.model_version}
                     </p>
                     <p className="text-sm text-gray-600">
-                      Type: {model.model_type} • Training Date: {new Date(model.training_date).toLocaleDateString()}
+                      Type: {model.model_type} • Training Date: {model.training_date ? new Date(model.training_date).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                   <div className="text-right">

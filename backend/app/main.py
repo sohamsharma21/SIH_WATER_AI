@@ -13,6 +13,7 @@ import platform
 from .config import settings
 from .api.routes import router
 from .utils.responses import error_response, success_response
+from .utils.rate_limiter import allow_request, get_window_usage
 
 # Configure logging
 logging.basicConfig(
@@ -80,6 +81,17 @@ async def log_requests(request: Request, call_next):
     """Log all HTTP requests with timing information."""
     start_time = time.time()
     try:
+        # Rate limiting: per-client IP
+        client_ip = request.client.host if request.client else 'unknown'
+        allowed, retry_after = allow_request(client_ip)
+        if not allowed:
+            # Return 429 Too Many Requests
+            content = error_response(
+                message=f"Rate limit exceeded. Try again in {retry_after} seconds",
+                status_code=429,
+                details={"retry_after": retry_after}
+            )
+            return JSONResponse(status_code=429, content=content)
         response = await call_next(request)
         process_time = time.time() - start_time
         logger.info(

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import type { PredictionWithOptimization } from '@/lib/types'
 import { api } from '@/lib/api'
 
 export default function TreatmentOptimizer() {
   const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState<any>(null)
+  const [results, setResults] = useState<any | null>(null)
 
   const handleOptimize = async () => {
     setLoading(true)
@@ -28,7 +29,9 @@ export default function TreatmentOptimizer() {
       })
 
       if (response.data.optimization) {
-        setResults(response.data.optimization)
+        // backend may return either a structured optimization object or an array
+        // normalize to a single object when possible
+        setResults(response.data.optimization ?? response.data)
       } else if (response.data.prediction) {
         // If no optimization, show prediction results
         setResults({
@@ -37,7 +40,7 @@ export default function TreatmentOptimizer() {
           contamination_index: response.data.prediction.contamination_index,
         })
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error optimizing:', error)
       alert('Error running optimization. Make sure backend is running.')
     } finally {

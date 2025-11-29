@@ -2,6 +2,9 @@
 ML Service - Handles model predictions and management
 """
 import logging
+import hashlib
+import json
+import time as _time
 from typing import Dict, Any, Optional
 from ..ml.model_manager import get_model_manager
 
@@ -14,6 +17,10 @@ class MLService:
     def __init__(self):
         """Initialize ML service."""
         self.model_manager = get_model_manager()
+        # Simple in-memory cache for recent predictions (per-process)
+        # key -> (timestamp, result)
+        self._prediction_cache: Dict[str, Any] = {}
+        self._cache_ttl_seconds = 300  # 5 minutes
     
     def predict(self, features: Dict[str, float], model_name: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -44,6 +51,22 @@ class MLService:
                 raise ValueError(f"Model '{model_name}' not found. Available: " + 
                                ", ".join(list(self.model_manager.models.keys())))
             
+            # Caching: check if we already computed this prediction recently
+            try:
+                cache_key = hashlib.sha256(
+                    (model_name + '::' + json.dumps(features, sort_keys=True)).encode('utf-8')
+                ).hexdigest()
+            except Exception:
+                cache_key = None
+
+            if cache_key:
+                cache_entry = self._prediction_cache.get(cache_key)
+                if cache_entry:
+                    ts, cached_result = cache_entry
+                    if _time.time() - ts < self._cache_ttl_seconds:
+                        logger.debug(f"Returning cached prediction for model={model_name}")
+                        return cached_result
+
             # Make prediction
             prediction_result = self.model_manager.predict(model_name, features)
             
@@ -101,6 +124,12 @@ class MLService:
             # Add derived metrics
             prediction_result['quality_score'] = round(quality_score, 2)
             prediction_result['contamination_index'] = round(contamination_index, 2)
+            # Store in cache
+            if cache_key:
+                try:
+                    self._prediction_cache[cache_key] = (_time.time(), prediction_result)
+                except Exception:
+                    pass
             
             return prediction_result
             
@@ -140,4 +169,17 @@ class MLService:
     def get_available_models(self) -> list:
         """Get list of available models."""
         return self.model_manager.get_available_models()
+
+    def clear_cache(self) -> int:
+        """Clear prediction cache and return number of entries removed."""
+        count = len(self._prediction_cache)
+        self._prediction_cache.clear()
+        return count
+
+    def cache_stats(self) -> Dict[str, Any]:
+        """Return cache statistics."""
+        now = _time.time()
+        total = len(self._prediction_cache)
+        valid = sum(1 for ts, _ in self._prediction_cache.values() if now - ts < self._cache_ttl_seconds)
+        return {"total_entries": total, "valid_entries": valid, "ttl_seconds": self._cache_ttl_seconds}
 

@@ -315,6 +315,32 @@ async def get_models():
         raise HTTPException(status_code=500, detail="Failed to fetch models")
 
 
+    @router.get('/models/cache_stats')
+    async def models_cache_stats():
+        """Return prediction cache statistics from ML service."""
+        try:
+            stats = {}
+            if hasattr(ml_service, 'cache_stats'):
+                stats = ml_service.cache_stats()
+            return success_response(stats, 'Cache stats')
+        except Exception as e:
+            logger.error(f"Error getting cache stats: {str(e)}", exc_info=True)
+            return internal_error_response('Failed to get cache stats')
+
+
+    @router.post('/models/clear_cache')
+    async def models_clear_cache():
+        """Clear prediction cache via ML service."""
+        try:
+            cleared = 0
+            if hasattr(ml_service, 'clear_cache'):
+                cleared = ml_service.clear_cache()
+            return success_response({ 'cleared': cleared }, 'Cache cleared')
+        except Exception as e:
+            logger.error(f"Error clearing cache: {str(e)}", exc_info=True)
+            return internal_error_response('Failed to clear cache')
+
+
 @router.get("/twin_status")
 async def get_twin_status():
     """Get current digital twin status for frontend."""

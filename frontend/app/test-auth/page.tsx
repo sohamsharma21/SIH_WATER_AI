@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function TestAuthPage() {
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<Record<string, any> | null>(null)
   const [email, setEmail] = useState('test@example.com')
   const [password, setPassword] = useState('test123456')
 
@@ -15,8 +15,8 @@ export default function TestAuthPage() {
         password,
       })
       setResult({ data, error, type: 'signup' })
-    } catch (err: any) {
-      setResult({ error: err.message, type: 'signup' })
+    } catch (err: unknown) {
+      setResult({ error: (err as Error)?.message ?? String(err), type: 'signup' })
     }
   }
 
@@ -27,8 +27,8 @@ export default function TestAuthPage() {
         password,
       })
       setResult({ data, error, type: 'login' })
-    } catch (err: any) {
-      setResult({ error: err.message, type: 'login' })
+    } catch (err: unknown) {
+      setResult({ error: (err as Error)?.message ?? String(err), type: 'login' })
     }
   }
 
@@ -36,8 +36,8 @@ export default function TestAuthPage() {
     try {
       const { data, error } = await supabase.auth.getSession()
       setResult({ data, error, type: 'session' })
-    } catch (err: any) {
-      setResult({ error: err.message, type: 'session' })
+    } catch (err: unknown) {
+      setResult({ error: (err as Error)?.message ?? String(err), type: 'session' })
     }
   }
 

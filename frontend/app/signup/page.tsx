@@ -58,9 +58,9 @@ export default function SignupPage() {
       } else {
         setError('Signup failed. Please try again.')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Signup error:', err)
-      setError(err.message || 'Failed to sign up. Please check your email and password.')
+      setError((err as Error)?.message ?? 'Failed to sign up. Please check your email and password.')
     } finally {
       setLoading(false)
     }

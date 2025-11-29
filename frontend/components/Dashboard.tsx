@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { PlantStatus, PredictionResponse } from '@/lib/types'
 import { api } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import DigitalTwin from './DigitalTwin'
@@ -10,8 +11,8 @@ import TreatmentOptimizer from './TreatmentOptimizer'
 import PredictionForm from './PredictionForm'
 
 export default function Dashboard() {
-  const [twinStatus, setTwinStatus] = useState<any>(null)
-  const [predictions, setPredictions] = useState<any[]>([])
+  const [twinStatus, setTwinStatus] = useState<PlantStatus | null>(null)
+  const [predictions, setPredictions] = useState<PredictionResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,8 +79,8 @@ export default function Dashboard() {
         }),
       ])
 
-      setTwinStatus(twinRes.data)
-      setPredictions(predictionsRes.data.predictions || [])
+      setTwinStatus(twinRes.data as PlantStatus)
+      setPredictions((predictionsRes.data.predictions || []) as PredictionResponse[])
       setLoading(false)
     } catch (error) {
       console.error('Error loading dashboard:', error)
@@ -106,9 +107,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Digital Twin */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 lg:col-span-2">
           <h2 className="text-xl font-semibold mb-4">Digital Twin</h2>
           <DigitalTwin status={twinStatus} />
         </div>

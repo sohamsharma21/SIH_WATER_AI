@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -14,8 +14,25 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    // prevent accidental double-submit
+    if (isSubmittingRef.current) return
+    isSubmittingRef.current = true
     setLoading(true)
     setError('')
+
+    // quick client-side validation for faster feedback
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.')
+      setLoading(false)
+      isSubmittingRef.current = false
+      return
+    }
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      setLoading(false)
+      isSubmittingRef.current = false
+      return
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -37,13 +54,17 @@ export default function LoginPage() {
       } else {
         setError('Login failed. No session created.')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err)
-      setError(err.message || 'Failed to login. Please try again.')
+      setError((err as Error)?.message ?? 'Failed to login. Please try again.')
     } finally {
       setLoading(false)
+      isSubmittingRef.current = false
     }
   }
+
+  // Prevent accidental double-submit or long-press behaviour
+  const isSubmittingRef = useRef(false)
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -85,7 +106,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+            aria-disabled={loading}
+            aria-busy={loading}
+            className={`w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 ${loading ? 'pointer-events-none' : ''}`}
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>

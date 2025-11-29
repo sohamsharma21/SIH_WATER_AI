@@ -81,7 +81,7 @@ def test_prediction_dataset2():
     
     try:
         response = requests.post(
-            f"{BACKEND_URL}/predict_with",
+            f"{BACKEND_URL}/predict",
             json=payload,
             timeout=15
         )
@@ -109,7 +109,7 @@ def test_prediction_dataset3():
     print_section("Testing Prediction - Dataset 3 (UCI Treatment)")
     # Create features for dataset3
     features = {}
-    for i in range(38):
+    for i in range(1, 38):
         features[f"feature_{i}"] = 100.0 + (i * 10)
     
     payload = {
@@ -120,7 +120,7 @@ def test_prediction_dataset3():
     
     try:
         response = requests.post(
-            f"{BACKEND_URL}/predict_with",
+            f"{BACKEND_URL}/predict",
             json=payload,
             timeout=15
         )

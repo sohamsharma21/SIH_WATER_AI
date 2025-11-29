@@ -16,8 +16,12 @@ def test_models():
         print(f"Response: {json.dumps(data, indent=2)}")
         
         if response.status_code == 200:
-            print(f"✅ PASS - Found {len(data)} models")
-            for model in data:
+            # The API returns an object with manager_models & database_models lists
+            manager_models = data.get('manager_models', [])
+            db_models = data.get('database_models', [])
+            total = len(manager_models) + len(db_models)
+            print(f"✅ PASS - Found {total} models (manager: {len(manager_models)}, database: {len(db_models)})")
+            for model in manager_models:
                 print(f"   - {model.get('dataset_name')}: {model.get('model_type')}")
             return True
         else:
@@ -31,13 +35,12 @@ def test_predict():
     """Test POST /predict with auto model selection."""
     print("\n=== Testing POST /predict (with auto selection) ===")
     try:
-        payload = {
-            "features": {
-                "feature_0": 1.0,
-                "feature_1": 2.0,
-                "feature_2": 3.0
-            }
-        }
+        # Use features that match the dataset3 model (dataset3 expects feature_1..feature_37)
+        # Use a large set of features to allow auto-selection to pick dataset3
+        features_dict = {}
+        for i in range(1, 21):
+            features_dict[f"feature_{i}"] = float(i)
+        payload = {"features": features_dict}
         response = requests.post(f"{BASE_URL}/predict", json=payload, timeout=5)
         print(f"Status: {response.status_code}")
         data = response.json()

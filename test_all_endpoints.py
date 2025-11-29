@@ -8,7 +8,7 @@ import json
 import time
 from datetime import datetime
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://127.0.0.1:8000"
 API_PREFIX = "/api/v1"
 
 def test_endpoint(method, endpoint, data=None, name="Test"):
@@ -58,6 +58,7 @@ def main():
     results["Sensor Data"].append(test_endpoint("GET", "/sensors/recent?limit=10", name="Get Recent Sensors"))
     results["Sensor Data"].append(test_endpoint("POST", "/ingest", {
         "sensor_id": "test_sensor_1",
+        "sensor_type": "turbidity_sensor",
         "parameter_name": "Turbidity",
         "value": 35.5,
         "unit": "%"

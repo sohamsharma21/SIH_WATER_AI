@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import type { PredictionRequest, PredictionWithOptimization } from '@/lib/types'
 import { api } from '@/lib/api'
 
 export default function PredictionForm() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<PredictionWithOptimization | null>(null)
   const [modelName, setModelName] = useState('dataset2')
   const [features, setFeatures] = useState({
     ph: 7.0,
@@ -28,11 +29,11 @@ export default function PredictionForm() {
         model_name: modelName,
         use_ensemble: false,
       })
-
-      setResult(response.data)
-    } catch (error: any) {
+      setResult(response.data as PredictionWithOptimization)
+    } catch (error: unknown) {
       console.error('Error making prediction:', error)
-      alert(`Error: ${error.response?.data?.detail || error.message}`)
+      const errMsg = (error as any)?.response?.data?.detail ?? (error as Error)?.message ?? String(error)
+      alert(`Error: ${errMsg}`)
     } finally {
       setLoading(false)
     }

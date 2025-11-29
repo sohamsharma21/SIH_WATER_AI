@@ -1,8 +1,10 @@
 'use client'
 
-export default function PredictionCard({ prediction }: { prediction: any }) {
-  const qualityScore = prediction.quality_score || 0
-  const contaminationIndex = prediction.contamination_index || 0
+import type { PredictionResponse } from '@/lib/types'
+
+export default function PredictionCard({ prediction }: { prediction: PredictionResponse }) {
+  const qualityScore = Number(prediction?.quality_score ?? 0)
+  const contaminationIndex = Number(prediction?.contamination_index ?? 0)
 
   const getQualityColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
@@ -14,9 +16,9 @@ export default function PredictionCard({ prediction }: { prediction: any }) {
     <div className="border rounded-lg p-4 mb-4 bg-gray-50">
       <div className="flex justify-between items-start mb-2">
         <div>
-          <h3 className="font-semibold">{prediction.model_name || 'Unknown Model'}</h3>
+          <h3 className="font-semibold">{prediction?.model_name ?? 'Unknown Model'}</h3>
           <p className="text-sm text-gray-500">
-            {new Date(prediction.timestamp).toLocaleString()}
+            {prediction?.timestamp ? new Date(prediction.timestamp).toLocaleString() : '—'}
           </p>
         </div>
         <div className={`text-2xl font-bold ${getQualityColor(qualityScore)}`}>

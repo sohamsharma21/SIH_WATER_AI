@@ -95,15 +95,18 @@ class ModelManager:
         if not scores:
             return None
         
-        # Select model with highest overlap ratio
-        best_model = max(scores.items(), key=lambda x: x[1]['ratio'])
-        
-        if best_model[1]['ratio'] > 0.5:  # At least 50% feature overlap
-            logger.info(f"Selected model: {best_model[0]} (overlap: {best_model[1]['ratio']:.2%})")
-            return best_model[0]
-        
-        logger.warning("No suitable model found with sufficient feature overlap")
-        return None
+        # Select model with highest overlap ratio (tie-breaker uses raw overlap)
+        best_model = max(scores.items(), key=lambda x: (x[1]['ratio'], x[1]['overlap']))
+
+        # If overlap is low but there are no better options, return the best candidate
+        ratio = best_model[1]['ratio']
+        if ratio >= 0.5:
+            logger.info(f"Selected model: {best_model[0]} (overlap: {ratio:.2%})")
+        else:
+            # Warn but still choose the best available model to avoid failing auto-select
+            logger.warning(f"Low feature overlap ({ratio:.2%}) - selecting best available model: {best_model[0]}")
+
+        return best_model[0]
     
     def predict(self, dataset_name: str, features: Dict[str, float]) -> Dict[str, Any]:
         """
